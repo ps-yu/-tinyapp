@@ -7,7 +7,7 @@ const generateRandomString = () => {
   var result = ""
   var charactersLength = characters.length;
 
-  for ( var i = 0; i < 5 ; i++ ) {
+  for ( var i = 0; i < 6 ; i++ ) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
 
@@ -44,17 +44,23 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  console.log(req.params)
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const randomString = generateRandomString();
+  urlDatabase[randomString] = req.body.longURL;
+  res.redirect(`/urls/${randomString}`)
 });
 
 
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]
+  res.redirect(longURL);
+});
+
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Example app listening on the port ${PORT}!`);
 });
