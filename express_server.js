@@ -1,4 +1,5 @@
 const express = require("express");
+const { redirect } = require("statuses");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -51,8 +52,13 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
   urlDatabase[randomString] = req.body.longURL;
-  res.redirect(`/urls/${randomString}`)
 });
+
+app.post("/urls/:id/delete", (req, res) => {
+
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls")
+})
 
 
 
