@@ -35,13 +35,15 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
+<!--Edit button to update a new URL-->              
               <td>
                 <form 
-                method="post"
-                action= "/urls/<%= id %>/delete" >
+                method="get"
+                action= "/urls/<%= id %>" >
                 <button type="submit" class="btn btn-outline-primary" >Edit </button>
                 </form>
               </td>
+<!--Delete button to delete a URL-->              
               <td>
                 <form 
                   method="post"
