@@ -34,10 +34,14 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]
+  res.redirect(longURL);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -55,17 +59,15 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-
   delete urlDatabase[req.params.id];
   res.redirect("/urls")
 })
 
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.updatedURL;
+  res.redirect("/urls")
+})
 
-
-app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]
-  res.redirect(longURL);
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on the port ${PORT}!`);
