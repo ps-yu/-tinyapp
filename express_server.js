@@ -34,39 +34,48 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//To read the url in the database
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+//To vist the url webpage
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]
   res.redirect(longURL);
 });
 
+//To create a new url
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
+//To crearte short url for the requested website
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
   urlDatabase[randomString] = req.body.longURL;
+  res.redirect("/urls")
 });
 
+//To delete an existing url
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls")
 })
 
+//To update an existing url
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.updatedURL;
   res.redirect("/urls")
 })
+
 
 
 app.listen(PORT, () => {

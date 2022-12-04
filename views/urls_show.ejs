@@ -25,9 +25,10 @@
       <div class="card-footer text-muted">
         <h5 class="card-title">Edit </h5>
         <form
-          method = "post"
+          method = "POST"
           action="/urls/<%= id %>">
-          <input type="text" name="updatedURL" placeholder="Enter new URL">
+          <label>Enter new URL </label>
+          <input type="text" name="updatedURL" placeholder="http://">
           <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
