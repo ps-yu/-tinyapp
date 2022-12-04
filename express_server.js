@@ -1,6 +1,8 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const { redirect } = require("statuses");
 const app = express();
+app.use(cookieParser());
 const PORT = 8080; // default port 8080
 
 const generateRandomString = () => {
@@ -14,6 +16,7 @@ const generateRandomString = () => {
 
   return result;
 }
+
 
 app.set("view engine", "ejs");
 
@@ -36,7 +39,9 @@ app.get("/hello", (req, res) => {
 
 //To read the url in the database
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    username : req.cookies["username"],
+    urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
@@ -53,10 +58,27 @@ app.get("/urls/new", (req, res) => {
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { 
+    username : req.cookies["username"],
+    id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
+<<<<<<< HEAD
+=======
+//To create cookie when the user log's in
+app.post("/login", (req,res) => {
+  res.cookie("username", req.body.login);
+  res.redirect("/urls");
+});
+
+//To logout the user
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls")
+})
+
+>>>>>>> feature/cookies
 //To crearte short url for the requested website
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
