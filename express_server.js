@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { redirect } = require("statuses");
+const { application } = require("express");
 const app = express();
 app.use(cookieParser());
 const PORT = 8080; // default port 8080
@@ -23,24 +24,21 @@ app.set("view engine", "ejs");
 //To parse the data used by the post in human readable form
 app.use(express.urlencoded({ extended: true }));
 
+//Database to store the urls
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+//Database to store the userID and passwords
+const users = {
+};
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
 
 //To read the url in the database
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    username : req.cookies["username"],
+    username : req.cookies["user_id"],
     urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
@@ -53,32 +51,38 @@ app.get("/u/:id", (req, res) => {
 
 //To create a new url
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username : req.cookies["user_id"]
+  }
+  res.render("urls_new", templateVars);
 });
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
   const templateVars = { 
-    username : req.cookies["username"],
-    id: req.params.id, longURL: urlDatabase[req.params.id] };
+    username : req.cookies["user_id"],
+    id: req.params.id, 
+    longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
-<<<<<<< HEAD
-=======
+//To create a new email and password for the user
+app.get("/register", (req,res) => {
+  res.render("urls_register");
+})
+
 //To create cookie when the user log's in
 app.post("/login", (req,res) => {
-  res.cookie("username", req.body.login);
-  res.redirect("/urls");
+  res.cookie("user_id", req.body.login);
+  res.redirect("/register");
 });
 
 //To logout the user
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls")
+  res.clearCookie("user_id");
+  res.redirect("/register")
 })
 
->>>>>>> feature/cookies
 //To crearte short url for the requested website
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
@@ -98,7 +102,17 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls")
 })
 
-
+//To create a new user ID 
+app.post("/register", (req,res) =>{
+  const userRandomID = generateRandomString();
+  users[userRandomID] = {
+    "id" : userRandomID,
+    "email": req.body.email,
+    "password": req.body.password
+  }
+  res.cookie("user_id", users[userRandomID]);
+  res.redirect("/urls")
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on the port ${PORT}!`);

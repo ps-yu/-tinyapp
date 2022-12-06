@@ -19,12 +19,12 @@
     </div>
   </div>
 <!--To check if the username exist-->
-<% if (username) { %>
+<% if (username ) { %>
 <!--Form to contain the username-->    
   <form 
     method="post"
     action= "/logout" >
-    <label for="logout">Logged in as: <%= username %>! </label>
+    <label for="logout">Logged in as: <%= username.email %>! </label>
     <button type="submit" class="btn btn-outline-dark" >Logout </button>
   </form>    
 <% } else{ %>
