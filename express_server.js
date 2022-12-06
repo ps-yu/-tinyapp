@@ -27,12 +27,22 @@ const generateRandomString = () => {
 
   return result;
 }
-
 //Function to check if the user email exists
 const getUserByEmail = inputEmail => {
   for (let user in users){
     if (users[user].email === inputEmail){
       return false;
+    }
+  }
+}
+
+//Function to check if the user email exists
+const checkPassword = (inputEmail,inputPassword) => {
+  for (let user in users){
+    if (users[user].email === inputEmail){
+      if (users[user].password === inputPassword){
+        return true;
+      }
     }
   }
 }
@@ -45,6 +55,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //To read the url in the database
 app.get("/urls", (req, res) => {
+  console.log(users);
   const templateVars = { 
     username : req.cookies["user_id"],
     urls: urlDatabase };
@@ -76,6 +87,7 @@ app.get("/urls/:id", (req, res) => {
 
 //To create a new email and password for the user
 app.get("/register", (req,res) => {
+  console.log(users);
   res.render("urls_register");
 })
 
@@ -86,8 +98,9 @@ app.get("/login", (req,res) => {
 
 //To logout the user
 app.post("/logout", (req, res) => {
+  console.log(users);
   res.clearCookie("user_id");
-  res.redirect("/register")
+  res.redirect("/login");
 })
 
 //To crearte short url for the requested website
@@ -111,10 +124,12 @@ app.post("/urls/:id", (req, res) => {
 
 //To create a new user ID 
 app.post("/register", (req,res) =>{
+  console.log(users);
   if (req.body.email === "" || req.body.password === ""){
     res.sendStatus(400);
     res.send("Please provide a valid response");
   } else if (getUserByEmail(req.body.email) === false) {
+    console.log(getUserByEmail(req.body.email));
     res.sendStatus(400);
   }else {
     const userRandomID = generateRandomString();
@@ -126,6 +141,28 @@ app.post("/register", (req,res) =>{
     res.cookie("user_id", users[userRandomID]);
     res.redirect("/urls")
   }
+})
+
+//To create a new login method for the users
+app.post("/login", (req,res) =>{
+  const userRandomID = generateRandomString();
+  if (req.body.email === "" || req.body.password === ""){
+    res.sendStatus(403);
+    res.send("Please provide a valid response");
+  }
+  if (checkPassword(req.body.email , req.body.password) === true){
+    users[userRandomID] = {
+      "id" : userRandomID,
+      "email": req.body.email,
+      "password": req.body.password
+    }
+    res.cookie("user_id", users[userRandomID]);
+    res.redirect("/urls")
+  } else {
+    res.sendStatus(403);
+  };
+  res.cookie("user_id", users[userRandomID]);
+  res.redirect("/urls")
 })
 
 app.listen(PORT, () => {
