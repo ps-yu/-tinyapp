@@ -6,6 +6,16 @@ const app = express();
 app.use(cookieParser());
 const PORT = 8080; // default port 8080
 
+//Database to store the urls
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
+
+//Database to store the userID and passwords
+const users = {
+};
+
 const generateRandomString = () => {
   var characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   var result = ""
@@ -18,22 +28,20 @@ const generateRandomString = () => {
   return result;
 }
 
+//Function to check if the user email exists
+const getUserByEmail = inputEmail => {
+  for (let user in users){
+    if (users[user].email === inputEmail){
+      return false;
+    }
+  }
+}
+
 
 app.set("view engine", "ejs");
 
 //To parse the data used by the post in human readable form
 app.use(express.urlencoded({ extended: true }));
-
-//Database to store the urls
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-//Database to store the userID and passwords
-const users = {
-};
-
 
 //To read the url in the database
 app.get("/urls", (req, res) => {
@@ -71,11 +79,10 @@ app.get("/register", (req,res) => {
   res.render("urls_register");
 })
 
-//To create cookie when the user log's in
-app.post("/login", (req,res) => {
-  res.cookie("user_id", req.body.login);
-  res.redirect("/register");
-});
+//To create a new form to set up login for the user
+app.get("/login", (req,res) => {
+  res.render("urls_login");
+})
 
 //To logout the user
 app.post("/logout", (req, res) => {
@@ -104,14 +111,21 @@ app.post("/urls/:id", (req, res) => {
 
 //To create a new user ID 
 app.post("/register", (req,res) =>{
-  const userRandomID = generateRandomString();
-  users[userRandomID] = {
-    "id" : userRandomID,
-    "email": req.body.email,
-    "password": req.body.password
+  if (req.body.email === "" || req.body.password === ""){
+    res.sendStatus(400);
+    res.send("Please provide a valid response");
+  } else if (getUserByEmail(req.body.email) === false) {
+    res.sendStatus(400);
+  }else {
+    const userRandomID = generateRandomString();
+    users[userRandomID] = {
+      "id" : userRandomID,
+      "email": req.body.email,
+      "password": req.body.password
+    }
+    res.cookie("user_id", users[userRandomID]);
+    res.redirect("/urls")
   }
-  res.cookie("user_id", users[userRandomID]);
-  res.redirect("/urls")
 })
 
 app.listen(PORT, () => {
