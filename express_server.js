@@ -41,10 +41,11 @@ const checkPassword = (inputEmail,inputPassword) => {
   for (let user in users){
     if (users[user].email === inputEmail){
       if (users[user].password === inputPassword){
-        return true;
+        return user;
       }
     }
   }
+  return false;
 }
 
 
@@ -98,7 +99,6 @@ app.get("/login", (req,res) => {
 
 //To logout the user
 app.post("/logout", (req, res) => {
-  console.log(users);
   res.clearCookie("user_id");
   res.redirect("/login");
 })
@@ -124,7 +124,6 @@ app.post("/urls/:id", (req, res) => {
 
 //To create a new user ID 
 app.post("/register", (req,res) =>{
-  console.log(users);
   if (req.body.email === "" || req.body.password === ""){
     res.sendStatus(400);
     res.send("Please provide a valid response");
@@ -145,23 +144,18 @@ app.post("/register", (req,res) =>{
 
 //To create a new login method for the users
 app.post("/login", (req,res) =>{
-  const userRandomID = generateRandomString();
+  let object_id ;
   if (req.body.email === "" || req.body.password === ""){
     res.sendStatus(403);
     res.send("Please provide a valid response");
   }
-  if (checkPassword(req.body.email , req.body.password) === true){
-    users[userRandomID] = {
-      "id" : userRandomID,
-      "email": req.body.email,
-      "password": req.body.password
-    }
-    res.cookie("user_id", users[userRandomID]);
-    res.redirect("/urls")
-  } else {
+  if (checkPassword(req.body.email , req.body.password) === false){
     res.sendStatus(403);
+  } else {
+    const object_id = checkPassword(req.body.email, req.body.password
+      );
+      res.cookie("user_id", users[object_id]);
   };
-  res.cookie("user_id", users[userRandomID]);
   res.redirect("/urls")
 })
 
