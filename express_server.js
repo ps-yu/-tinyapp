@@ -8,8 +8,14 @@ const PORT = 8080; // default port 8080
 
 //Database to store the urls
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 //Database to store the userID and passwords
@@ -48,6 +54,16 @@ const checkPassword = (inputEmail,inputPassword) => {
   return false;
 }
 
+//Function to filter the userDatabase by the user_id;
+const urlsForUser = user => {
+  let database = {};
+  for (let id in urlDatabase){
+    if (urlDatabase[id].userID === user){
+      database[id] = urlDatabase[id].longURL
+    }
+  }
+  return database;
+}
 
 app.set("view engine", "ejs");
 
@@ -57,10 +73,17 @@ app.use(express.urlencoded({ extended: true }));
 //To read the url in the database
 app.get("/urls", (req, res) => {
   console.log(users);
-  const templateVars = { 
-    username : req.cookies["user_id"],
-    urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  console.log(urlDatabase);
+  const userLogin = req.cookies["user_id"];
+  if (userLogin){
+    const userUrls = urlsForUser(userLogin.id);
+    const templateVars = { 
+      username : req.cookies["user_id"],
+      urls: userUrls };
+    res.render("urls_index", templateVars);
+  }else {
+    res.send("<html><body>Please login to see your URL's</body></html>\n")
+  }
 });
 
 //To vist the url webpage
@@ -71,30 +94,57 @@ app.get("/u/:id", (req, res) => {
 
 //To create a new url
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username : req.cookies["user_id"]
+  const user = req.cookies["user_id"];
+  if (user){
+    const templateVars = {
+      username : req.cookies["user_id"]
+    }
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
   }
-  res.render("urls_new", templateVars);
 });
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { 
-    username : req.cookies["user_id"],
-    id: req.params.id, 
-    longURL: urlDatabase[req.params.id] };
-  res.render("urls_show", templateVars);
+  const userLogin = req.cookies["user_id"];
+  if (userLogin){
+    if (req.params.id in urlDatabase){
+      if (userLogin.id === urlDatabase[req.params.id].userID){
+        const templateVars = { 
+          username : req.cookies["user_id"],
+          id: req.params.id, 
+          longURL: urlDatabase[req.params.id].longURL };
+        res.render("urls_show", templateVars);
+      }else {
+        res.send("<html><body>You are not authorised to edit this URL</body></html>\n")
+      }
+    }else{
+      res.send("<html><body>The specified URL doesn't exist</body></html>\n")
+    }
+  }else {
+    res.send("<html><body>Please login to see your URL's</body></html>\n");
+  }
 });
 
 //To create a new email and password for the user
 app.get("/register", (req,res) => {
-  console.log(users);
-  res.render("urls_register");
+  const user = req.cookies["user_id"];
+  if (user){
+    res.redirect("/urls");
+  }else {
+    res.render("urls_register");
+  }
 })
 
 //To create a new form to set up login for the user
 app.get("/login", (req,res) => {
-  res.render("urls_login");
+  const user = req.cookies["user_id"];
+  if (user){
+    res.redirect("/urls");
+  }else {
+    res.render("urls_login");
+  }
 })
 
 //To logout the user
@@ -105,21 +155,60 @@ app.post("/logout", (req, res) => {
 
 //To crearte short url for the requested website
 app.post("/urls", (req, res) => {
-  const randomString = generateRandomString();
-  urlDatabase[randomString] = req.body.longURL;
-  res.redirect("/urls")
+  const user = req.cookies["user_id"];
+  if (user){
+    const randomString = generateRandomString();
+    const object = {
+      longURL : req.body.longURL,
+      userID : user.id
+    }
+    urlDatabase[randomString] = object;
+    console.log(urlDatabase);
+    res.redirect("/urls")
+  }else {
+    res.render("error_new");
+  }
 });
+
 
 //To delete an existing url
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls")
+  const userLogin = req.cookies["user_id"];
+  if (userLogin){
+    if (req.params.id in urlDatabase){
+      if (userLogin.id === urlDatabase[req.params.id].userID){
+        delete urlDatabase[req.params.id];
+        res.redirect("/urls")
+      }else {
+        res.send("<html><body>You are not authorised to edit this URL</body></html>\n")
+      }
+    }else{
+      res.send("<html><body>The specified URL doesn't exist</body></html>\n")
+    }
+  }else {
+    res.send("<html><body>Please login to see your URL's</body></html>\n");
+  }
 })
 
 //To update an existing url
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.updatedURL;
-  res.redirect("/urls")
+  const userLogin = req.cookies["user_id"];
+  if (userLogin){
+    if (req.params.id in urlDatabase){
+      if (userLogin.id === urlDatabase[req.params.id].userID){
+        urlDatabase[req.params.id] = {
+          longURL : req.body.updatedURL,
+          userID : userLogin.id};
+        res.redirect("/urls")
+      }else {
+        res.send("<html><body>You are not authorised to edit this URL</body></html>\n")
+      }
+    }else{
+      res.send("<html><body>The specified URL doesn't exist</body></html>\n")
+    }
+  }else {
+    res.send("<html><body>Please login to see your URL's</body></html>\n");
+  }
 })
 
 //To create a new user ID 
@@ -137,8 +226,7 @@ app.post("/register", (req,res) =>{
       "email": req.body.email,
       "password": req.body.password
     }
-    res.cookie("user_id", users[userRandomID]);
-    res.redirect("/urls")
+    res.redirect("/login")
   }
 })
 
