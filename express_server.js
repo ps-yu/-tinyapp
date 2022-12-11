@@ -1,11 +1,16 @@
 //Required modules to run the app
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const cookieSession = require('cookie-session')
 const { redirect } = require("statuses");
 const { application } = require("express");
 const app = express();
 const bcrypt = require("bcryptjs")
-app.use(cookieParser());
+const getUserByEmail = require("./helpers");
+
+app.use(cookieSession({
+  name : "session",
+  keys : ["ndnwekn", "kedsmfd"]
+}));
 const PORT = 8080; // default port 8080
 
 //Database to store the urls
@@ -35,15 +40,6 @@ const generateRandomString = () => {
   }
 
   return result;
-}
-
-//Function to check if the user email exists
-const getUserByEmail = inputEmail => {
-  for (let user in users){
-    if (users[user].email === inputEmail){
-      return false;
-    }
-  }
 }
 
 //Function to match the user password
@@ -81,14 +77,14 @@ app.get("/urls", (req, res) => {
   console.log(users);
   console.log(urlDatabase);
 //Requesting the cookies from the browser to get user specific information  
-  const userLogin = req.cookies["user_id"];
+  const userLogin = req.session.user_id;
 //Condition to check if the user has logged in 
   if (userLogin){
 //Using the objet to be rendered created by the urlForUser function
 //userLogin.id is the value of the user_id set by the server
     const userUrls = urlsForUser(userLogin.id);
     const templateVars = { 
-      username : req.cookies["user_id"],
+      username : req.session.user_id,
       urls: userUrls };
     res.render("urls_index", templateVars);
   }else {
@@ -98,17 +94,18 @@ app.get("/urls", (req, res) => {
 
 //To vist the url webpage 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]
+  const user = req.params.id;
+  const longURL = urlDatabase[user].longURL;
   res.redirect(longURL);
 });
 
 //To create a new url
 app.get("/urls/new", (req, res) => {
 //To verify if the user has logged in 
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
   if (user){
     const templateVars = {
-      username : req.cookies["user_id"]
+      username : req.session.user_id
     }
     res.render("urls_new", templateVars);
   } else {
@@ -118,7 +115,7 @@ app.get("/urls/new", (req, res) => {
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
-  const userLogin = req.cookies["user_id"];
+  const userLogin = req.session.user_id;
 //To check if the user has logged in 
   if (userLogin){
 //To check if the entered short url exists in the database
@@ -126,7 +123,7 @@ app.get("/urls/:id", (req, res) => {
 //To check if the requested url belongs to logged in user
       if (userLogin.id === urlDatabase[req.params.id].userID){
         const templateVars = { 
-          username : req.cookies["user_id"],
+          username : req.session.user_id,
           id: req.params.id, 
           longURL: urlDatabase[req.params.id].longURL };
         res.render("urls_show", templateVars);
@@ -143,7 +140,7 @@ app.get("/urls/:id", (req, res) => {
 
 //To create a new email and password for the user
 app.get("/register", (req,res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
 //To check if the user has logged in 
   if (user){
     res.redirect("/urls");
@@ -155,7 +152,7 @@ app.get("/register", (req,res) => {
 //To create a new form to set up login for the user
 app.get("/login", (req,res) => {
 //To check if a user has logged in 
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
   if (user){
     res.redirect("/urls");
   }else {
@@ -165,13 +162,13 @@ app.get("/login", (req,res) => {
 
 //To logout the user
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 })
 
 //To crearte short url for the requested website
 app.post("/urls", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
 //To check if a user has logged in the website
   if (user){
 //To create a short url for the website
@@ -193,7 +190,7 @@ app.post("/urls", (req, res) => {
 
 //To delete an existing url
 app.post("/urls/:id/delete", (req, res) => {
-  const userLogin = req.cookies["user_id"];
+  const userLogin = req.session.user_id;
 //To check if a user has logged on 
   if (userLogin){
 //To check if the url exists in the database
@@ -215,7 +212,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //To update an existing url
 app.post("/urls/:id", (req, res) => {
-  const userLogin = req.cookies["user_id"];
+  const userLogin = req.session.user_id;
 //To check if a user has logged in 
   if (userLogin){
 //To check if the url exists in the database
@@ -243,8 +240,8 @@ app.post("/register", (req,res) =>{
   if (req.body.email === "" || req.body.password === ""){
     res.sendStatus(400);
     res.send("Please provide a valid response");
-  } else if (getUserByEmail(req.body.email) === false) {
-    console.log(getUserByEmail(req.body.email));
+  } else if (getUserByEmail(req.body.email,users) === false) {
+    console.log(getUserByEmail(req.body.email,users));
     res.sendStatus(400);
   }else {
     const userRandomID = generateRandomString();
@@ -275,7 +272,7 @@ app.post("/login", (req,res) =>{
 //Setting up on abject to be used as cookie by the browser
     const object_id = checkPassword(req.body.email, req.body.password
       );
-      res.cookie("user_id", users[object_id]);
+      req.session.user_id = users[object_id];
   };
   res.redirect("/urls")
 })
