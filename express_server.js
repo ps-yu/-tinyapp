@@ -1,3 +1,4 @@
+//Required modules to run the app
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { redirect } = require("statuses");
@@ -49,7 +50,7 @@ const getUserByEmail = inputEmail => {
 const checkPassword = (inputEmail,inputPassword) => {
   for (let user in users){
     if (users[user].email === inputEmail){
-      if (users[user].password === inputPassword){
+      if (bcrypt.compareSync(inputPassword,users[user].password)){
         return user;
       }
     }
@@ -247,11 +248,14 @@ app.post("/register", (req,res) =>{
     res.sendStatus(400);
   }else {
     const userRandomID = generateRandomString();
+    const password = req.body.password;
+    const hashedPassword = bcrypt.hashSync(password,10);
     users[userRandomID] = {
       "id" : userRandomID,
       "email": req.body.email,
-      "password": req.body.password
+      "password": hashedPassword
     }
+    console.log(users);
     res.redirect("/login")
   }
 })
