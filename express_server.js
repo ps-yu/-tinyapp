@@ -74,8 +74,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //To read the url in the database
 app.get("/urls", (req, res) => {
-  console.log(users);
-  console.log(urlDatabase);
+
 //Requesting the cookies from the browser to get user specific information  
   const userLogin = req.session.user_id;
 //Condition to check if the user has logged in 
@@ -241,7 +240,6 @@ app.post("/register", (req,res) =>{
     res.sendStatus(400);
     res.send("Please provide a valid response");
   } else if (getUserByEmail(req.body.email,users) === false) {
-    console.log(getUserByEmail(req.body.email,users));
     res.sendStatus(400);
   }else {
     const userRandomID = generateRandomString();
@@ -252,7 +250,6 @@ app.post("/register", (req,res) =>{
       "email": req.body.email,
       "password": hashedPassword
     }
-    console.log(users);
     res.redirect("/login")
   }
 })
