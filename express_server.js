@@ -5,7 +5,9 @@ const { redirect } = require("statuses");
 const { application } = require("express");
 const app = express();
 const bcrypt = require("bcryptjs")
-const getUserByEmail = require("./helpers");
+const {getUserByEmail, generateRandomString, checkPassword, urlsForUser} = require("./helpers");
+const {urlDatabase, users} = require("./database")
+
 
 app.use(cookieSession({
   name : "session",
@@ -13,68 +15,27 @@ app.use(cookieSession({
 }));
 const PORT = 8080; // default port 8080
 
-//Database to store the urls
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
-
-//Database to store the userID and passwords
-const users = {
-};
-
-//Function to create a random string for the short URLs
-const generateRandomString = () => {
-  var characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  var result = ""
-  var charactersLength = characters.length;
-
-  for ( var i = 0; i < 6 ; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-
-  return result;
-}
-
-//Function to match the user password
-const checkPassword = (inputEmail,inputPassword) => {
-  for (let user in users){
-    if (users[user].email === inputEmail){
-      if (bcrypt.compareSync(inputPassword,users[user].password)){
-        return user;
-      }
-    }
-  }
-  return false;
-}
-
-//Function to filter the userDatabase by the user_id;
-const urlsForUser = user => {
-// Create a new object that contains the user specific URL and id 
-  let database = {};
-  for (let id in urlDatabase){
-    if (urlDatabase[id].userID === user){
-      database[id] = urlDatabase[id].longURL
-    }
-  }
-//Return the object that is created by the user
-  return database;
-}
 
 app.set("view engine", "ejs");
 
 //To parse the data used by the post in human readable form
 app.use(express.urlencoded({ extended: true }));
 
+////////////////////
+////Get Requests////
+////////////////////
+app.get("/", (req, res) => {
+  const userLogin = req.session.user_id;
+  if (userLogin){
+    res.redirect("/urls");
+  }else {
+    res.redirect("/login");
+  }
+}) 
+
+
 //To read the url in the database
 app.get("/urls", (req, res) => {
-
 //Requesting the cookies from the browser to get user specific information  
   const userLogin = req.session.user_id;
 //Condition to check if the user has logged in 
@@ -83,7 +44,7 @@ app.get("/urls", (req, res) => {
 //userLogin.id is the value of the user_id set by the server
     const userUrls = urlsForUser(userLogin.id);
     const templateVars = { 
-      username : req.session.user_id,
+      username : users[req.session.user_id],
       urls: userUrls };
     res.render("urls_index", templateVars);
   }else {
@@ -159,6 +120,10 @@ app.get("/login", (req,res) => {
   }
 })
 
+///////////////////
+///Post Requests///
+///////////////////
+
 //To logout the user
 app.post("/logout", (req, res) => {
   req.session = null;
@@ -180,7 +145,7 @@ app.post("/urls", (req, res) => {
 //Updating the database with above object and short url as property
     urlDatabase[randomString] = object;
     console.log(urlDatabase);
-    res.redirect("/urls")
+    res.redirect(`/urls/${randomString}`)
   }else {
     res.render("error_new");
   }
@@ -250,7 +215,8 @@ app.post("/register", (req,res) =>{
       "email": req.body.email,
       "password": hashedPassword
     }
-    res.redirect("/login")
+    req.session.user_id = userRandomID
+    res.redirect("/urls")
   }
 })
 
