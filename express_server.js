@@ -1,8 +1,6 @@
 //Required modules to run the app
 const express = require("express");
 const cookieSession = require('cookie-session')
-const { redirect } = require("statuses");
-const { application } = require("express");
 const app = express();
 const bcrypt = require("bcryptjs")
 const {getUserByEmail, generateRandomString, checkPassword, urlsForUser} = require("./helpers");
@@ -13,7 +11,7 @@ app.use(cookieSession({
   name : "session",
   keys : ["ndnwekn", "kedsmfd"]
 }));
-const PORT = 8080; // default port 8080
+const PORT = 8181; // default port 8080
 
 
 app.set("view engine", "ejs");
@@ -46,7 +44,9 @@ app.get("/urls", (req, res) => {
     const templateVars = { 
       username : users[req.session.user_id],
       urls: userUrls };
+    console.log("this is templatevar",templateVars);
     res.render("urls_index", templateVars);
+  
   }else {
     res.send("<html><body>Please login to see your URL's</body></html>\n")
   }
@@ -100,23 +100,28 @@ app.get("/urls/:id", (req, res) => {
 
 //To create a new email and password for the user
 app.get("/register", (req,res) => {
-  const user = req.session.user_id;
-//To check if the user has logged in 
-  if (user){
-    res.redirect("/urls");
-  }else {
-    res.render("urls_register");
+  const userID = req.session.user_id;
+  if (userID){
+    res.redirect("/urls")
+  }else{
+    const templateVars = {
+      username : ""
+    }
+    res.render("urls_register", templateVars);  
   }
 })
 
 //To create a new form to set up login for the user
 app.get("/login", (req,res) => {
 //To check if a user has logged in 
-  const user = req.session.user_id;
-  if (user){
-    res.redirect("/urls");
-  }else {
-    res.render("urls_login");
+  const userID = req.session.user_id;
+  if (userID){
+    res.redirect("/urls")
+  }else{
+    const templateVars = {
+      username : ""
+    }
+    res.render("urls_login", templateVars);  
   }
 })
 
