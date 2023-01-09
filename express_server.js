@@ -41,6 +41,10 @@ app.get("/urls", (req, res) => {
 //Using the objet to be rendered created by the urlForUser function
 //userLogin.id is the value of the user_id set by the server
     const userUrls = urlsForUser(userLogin.id);
+    const userObject = users[userLogin];
+    console.log('#1 userid ', userLogin)
+    console.log('#2 userlogin ', userLogin)
+    console.log('#3 users ', users )
     const templateVars = { 
       username : users[req.session.user_id],
       urls: userUrls };
@@ -62,16 +66,17 @@ app.get("/u/:id", (req, res) => {
 //To create a new url
 app.get("/urls/new", (req, res) => {
 //To verify if the user has logged in 
-  const user = req.session.user_id;
-  if (user){
-    const templateVars = {
-      username : req.session.user_id
-    }
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
+const userID = req.session.user_id;
+if (userID){
+  res.redirect("/urls")
+}else{
+  const templateVars = {
+    username : ""
   }
-});
+  res.render("urls_new", templateVars);  
+}
+})
+
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
@@ -240,7 +245,7 @@ app.post("/login", (req,res) =>{
 //Setting up on abject to be used as cookie by the browser
     const object_id = checkPassword(req.body.email, req.body.password
       );
-      req.session.user_id = users[object_id];
+      req.session.user_id = users[object_id].id;
   };
   res.redirect("/urls")
 })
