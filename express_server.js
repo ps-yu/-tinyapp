@@ -35,20 +35,15 @@ app.get("/", (req, res) => {
 //To read the url in the database
 app.get("/urls", (req, res) => {
 //Requesting the cookies from the browser to get user specific information  
-  const userLogin = req.session.user_id;
+  const userLogin = users[req.session.user_id];
 //Condition to check if the user has logged in 
   if (userLogin){
 //Using the objet to be rendered created by the urlForUser function
 //userLogin.id is the value of the user_id set by the server
     const userUrls = urlsForUser(userLogin.id);
-    const userObject = users[userLogin];
-    console.log('#1 userid ', userLogin)
-    console.log('#2 userlogin ', userLogin)
-    console.log('#3 users ', users )
     const templateVars = { 
       username : users[req.session.user_id],
       urls: userUrls };
-    console.log("this is templatevar",templateVars);
     res.render("urls_index", templateVars);
   
   }else {
@@ -66,21 +61,20 @@ app.get("/u/:id", (req, res) => {
 //To create a new url
 app.get("/urls/new", (req, res) => {
 //To verify if the user has logged in 
-const userID = req.session.user_id;
-if (userID){
-  res.redirect("/urls")
-}else{
-  const templateVars = {
-    username : ""
+  const userId = req.session.user_id;
+  if (userId  ){
+    const templateVars = {
+      username : users[req.session.user_id]
+    }
+    res.render("urls_new", templateVars); 
+  }else {
+    res.redirect("/login");
   }
-  res.render("urls_new", templateVars);  
-}
-})
-
+});
 
 //To dynamically show the requested short url
 app.get("/urls/:id", (req, res) => {
-  const userLogin = req.session.user_id;
+  const userLogin = users[req.session.user_id];
 //To check if the user has logged in 
   if (userLogin){
 //To check if the entered short url exists in the database
@@ -88,7 +82,7 @@ app.get("/urls/:id", (req, res) => {
 //To check if the requested url belongs to logged in user
       if (userLogin.id === urlDatabase[req.params.id].userID){
         const templateVars = { 
-          username : req.session.user_id,
+          username : users[req.session.user_id],
           id: req.params.id, 
           longURL: urlDatabase[req.params.id].longURL };
         res.render("urls_show", templateVars);
@@ -142,7 +136,7 @@ app.post("/logout", (req, res) => {
 
 //To crearte short url for the requested website
 app.post("/urls", (req, res) => {
-  const user = req.session.user_id;
+  const user = users[req.session.user_id];
 //To check if a user has logged in the website
   if (user){
 //To create a short url for the website
@@ -155,7 +149,7 @@ app.post("/urls", (req, res) => {
 //Updating the database with above object and short url as property
     urlDatabase[randomString] = object;
     console.log(urlDatabase);
-    res.redirect(`/urls/${randomString}`)
+    res.redirect("/urls")
   }else {
     res.render("error_new");
   }
@@ -164,7 +158,7 @@ app.post("/urls", (req, res) => {
 
 //To delete an existing url
 app.post("/urls/:id/delete", (req, res) => {
-  const userLogin = req.session.user_id;
+  const userLogin = users[req.session.user_id];
 //To check if a user has logged on 
   if (userLogin){
 //To check if the url exists in the database
@@ -186,7 +180,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //To update an existing url
 app.post("/urls/:id", (req, res) => {
-  const userLogin = req.session.user_id;
+  const userLogin = users[req.session.user_id];
 //To check if a user has logged in 
   if (userLogin){
 //To check if the url exists in the database
